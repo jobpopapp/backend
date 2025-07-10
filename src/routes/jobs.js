@@ -13,6 +13,7 @@ const {
 
 // Public routes (no auth required)
 router.get("/categories", jobController.getJobCategories);
+router.get("/", jobController.getAllJobs); // Public job listings
 
 // Protected routes
 router.get(
@@ -21,6 +22,14 @@ router.get(
   requireVerification,
   jobController.getMyJobs
 );
+
+router.get(
+  "/stats",
+  authenticateToken,
+  requireVerification,
+  jobController.getJobStats
+);
+
 router.get(
   "/:id",
   authenticateToken,

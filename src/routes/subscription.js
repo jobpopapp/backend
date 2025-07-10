@@ -17,6 +17,12 @@ router.get(
   subscriptionController.getCurrentSubscription
 );
 
+router.get(
+  "/status",
+  authenticateToken,
+  subscriptionController.getCurrentSubscription
+);
+
 router.post(
   "/initiate",
   authenticateToken,

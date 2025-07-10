@@ -299,6 +299,130 @@ const getJobById = async (req, res) => {
   }
 };
 
+// Get job statistics for the authenticated company
+const getJobStats = async (req, res) => {
+  try {
+    const companyId = req.companyId;
+
+    // Get total jobs count
+    const { count: totalJobs, error: totalError } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId);
+
+    if (totalError) {
+      console.error("Total jobs count error:", totalError);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to get job statistics"));
+    }
+
+    // Get jobs created this month
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    thisMonth.setHours(0, 0, 0, 0);
+
+    const { count: monthlyJobs, error: monthlyError } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .gte("created_at", thisMonth.toISOString());
+
+    if (monthlyError) {
+      console.error("Monthly jobs count error:", monthlyError);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to get monthly job statistics"));
+    }
+
+    // Get active jobs (not expired)
+    const { count: activeJobs, error: activeError } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .gte("deadline", new Date().toISOString());
+
+    if (activeError) {
+      console.error("Active jobs count error:", activeError);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to get active job statistics"));
+    }
+
+    const stats = {
+      totalJobs: totalJobs || 0,
+      monthlyJobs: monthlyJobs || 0,
+      activeJobs: activeJobs || 0,
+      expiredJobs: (totalJobs || 0) - (activeJobs || 0),
+    };
+
+    res.json(formatResponse(true, { stats }, "Job statistics retrieved successfully"));
+  } catch (error) {
+    console.error("Get job stats error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Get all jobs (public route with pagination)
+const getAllJobs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .gte("deadline", new Date().toISOString()); // Only active jobs
+
+    if (countError) {
+      console.error("Count error:", countError);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to get job count"));
+    }
+
+    // Get jobs with pagination
+    const { data: jobs, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .gte("deadline", new Date().toISOString()) // Only active jobs
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error("Get all jobs error:", error);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to retrieve jobs"));
+    }
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.json(
+      formatResponse(
+        true,
+        {
+          jobs,
+          pagination: {
+            page,
+            limit,
+            total: count,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+          },
+        },
+        "Jobs retrieved successfully"
+      )
+    );
+  } catch (error) {
+    console.error("Get all jobs error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
 module.exports = {
   getMyJobs,
   createJob,
@@ -306,4 +430,6 @@ module.exports = {
   deleteJob,
   getJobCategories,
   getJobById,
+  getJobStats,
+  getAllJobs,
 };
