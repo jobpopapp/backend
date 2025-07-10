@@ -1,0 +1,309 @@
+const { supabase } = require("../config/supabase");
+const { formatResponse } = require("../utils/helpers");
+
+// Get all jobs for the authenticated company
+const getMyJobs = async (req, res) => {
+  try {
+    const companyId = req.companyId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from("jobs")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", companyId);
+
+    if (countError) {
+      console.error("Count error:", countError);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to get job count"));
+    }
+
+    // Get jobs with pagination
+    const { data: jobs, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error("Get jobs error:", error);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to retrieve jobs"));
+    }
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.json(
+      formatResponse(
+        true,
+        {
+          jobs,
+          pagination: {
+            page,
+            limit,
+            total: count,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1,
+          },
+        },
+        "Jobs retrieved successfully"
+      )
+    );
+  } catch (error) {
+    console.error("Get my jobs error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Create a new job
+const createJob = async (req, res) => {
+  try {
+    const companyId = req.companyId;
+    const {
+      title,
+      description,
+      category,
+      country,
+      salary,
+      deadline,
+      is_foreign,
+      email,
+      phone,
+      whatsapp,
+      application_link,
+    } = req.body;
+
+    // Create job data object
+    const jobData = {
+      title,
+      description,
+      category,
+      country,
+      deadline: new Date(deadline).toISOString(),
+      company_id: companyId,
+      created_at: new Date().toISOString(),
+    };
+
+    // Add optional fields if provided
+    if (salary) jobData.salary = salary;
+    if (is_foreign !== undefined) jobData.is_foreign = is_foreign;
+    if (email) jobData.email = email;
+    if (phone) jobData.phone = phone;
+    if (whatsapp) jobData.whatsapp = whatsapp;
+    if (application_link) jobData.application_link = application_link;
+
+    // Insert job into database
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .insert([jobData])
+      .select("*")
+      .single();
+
+    if (error) {
+      console.error("Create job error:", error);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to create job"));
+    }
+
+    res
+      .status(201)
+      .json(formatResponse(true, { job }, "Job created successfully"));
+  } catch (error) {
+    console.error("Create job error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Update an existing job
+const updateJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.companyId;
+    const {
+      title,
+      description,
+      category,
+      country,
+      salary,
+      deadline,
+      is_foreign,
+      email,
+      phone,
+      whatsapp,
+      application_link,
+    } = req.body;
+
+    // Check if job exists and belongs to the company
+    const { data: existingJob, error: checkError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", jobId)
+      .eq("company_id", companyId)
+      .single();
+
+    if (checkError || !existingJob) {
+      return res
+        .status(404)
+        .json(formatResponse(false, null, "Job not found or access denied"));
+    }
+
+    // Build update object with only provided fields
+    const updates = {};
+    if (title) updates.title = title;
+    if (description) updates.description = description;
+    if (category) updates.category = category;
+    if (country) updates.country = country;
+    if (salary) updates.salary = salary;
+    if (deadline) updates.deadline = new Date(deadline).toISOString();
+    if (is_foreign !== undefined) updates.is_foreign = is_foreign;
+    if (email) updates.email = email;
+    if (phone) updates.phone = phone;
+    if (whatsapp) updates.whatsapp = whatsapp;
+    if (application_link) updates.application_link = application_link;
+
+    if (Object.keys(updates).length === 0) {
+      return res
+        .status(400)
+        .json(formatResponse(false, null, "No valid fields to update"));
+    }
+
+    // Update the job
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .update(updates)
+      .eq("id", jobId)
+      .eq("company_id", companyId)
+      .select("*")
+      .single();
+
+    if (error) {
+      console.error("Update job error:", error);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to update job"));
+    }
+
+    res.json(formatResponse(true, { job }, "Job updated successfully"));
+  } catch (error) {
+    console.error("Update job error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Delete a job
+const deleteJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.companyId;
+
+    // Check if job exists and belongs to the company
+    const { data: existingJob, error: checkError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", jobId)
+      .eq("company_id", companyId)
+      .single();
+
+    if (checkError || !existingJob) {
+      return res
+        .status(404)
+        .json(formatResponse(false, null, "Job not found or access denied"));
+    }
+
+    // Delete the job
+    const { error } = await supabase
+      .from("jobs")
+      .delete()
+      .eq("id", jobId)
+      .eq("company_id", companyId);
+
+    if (error) {
+      console.error("Delete job error:", error);
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to delete job"));
+    }
+
+    res.json(formatResponse(true, null, "Job deleted successfully"));
+  } catch (error) {
+    console.error("Delete job error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Get job categories
+const getJobCategories = async (req, res) => {
+  try {
+    const categories = [
+      "Domestic Work",
+      "Construction & Manual Labor",
+      "Security Services",
+      "Driving & Transport",
+      "Hospitality & Tourism",
+      "Healthcare & Nursing",
+      "Education & Teaching",
+      "Sales & Retail",
+      "Agriculture & Farming",
+      "Cleaning & Maintenance",
+      "IT & Technical",
+      "Office & Administration",
+      "Beauty & Personal Care",
+      "Artisan & Skilled Trades",
+      "Other",
+    ];
+
+    res.json(
+      formatResponse(
+        true,
+        { categories },
+        "Job categories retrieved successfully"
+      )
+    );
+  } catch (error) {
+    console.error("Get categories error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+// Get a single job by ID
+const getJobById = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.companyId;
+
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", jobId)
+      .eq("company_id", companyId)
+      .single();
+
+    if (error || !job) {
+      return res
+        .status(404)
+        .json(formatResponse(false, null, "Job not found or access denied"));
+    }
+
+    res.json(formatResponse(true, { job }, "Job retrieved successfully"));
+  } catch (error) {
+    console.error("Get job by ID error:", error);
+    res.status(500).json(formatResponse(false, null, "Internal server error"));
+  }
+};
+
+module.exports = {
+  getMyJobs,
+  createJob,
+  updateJob,
+  deleteJob,
+  getJobCategories,
+  getJobById,
+};

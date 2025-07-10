@@ -1,0 +1,7 @@
+{
+  "name": "Test Company Ltd",
+  "email": "test@example.com",
+  "password": "TestPassword123",
+  "phone": "+1234567890",
+  "country": "Kenya"
+}
