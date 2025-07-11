@@ -98,6 +98,8 @@ app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/subscription", subscriptionRoutes);
+const categoryRoutes = require("./routes/categories");
+app.use("/api/categories", categoryRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

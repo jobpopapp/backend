@@ -70,25 +70,8 @@ const validateJobCreation = [
     .isLength({ min: 50, max: 5000 })
     .withMessage("Job description must be between 50 and 5000 characters"),
 
-  body("category")
-    .trim()
-    .isIn([
-      "Domestic Work",
-      "Construction & Manual Labor",
-      "Security Services",
-      "Driving & Transport",
-      "Hospitality & Tourism",
-      "Healthcare & Nursing",
-      "Education & Teaching",
-      "Sales & Retail",
-      "Agriculture & Farming",
-      "Cleaning & Maintenance",
-      "IT & Technical",
-      "Office & Administration",
-      "Beauty & Personal Care",
-      "Artisan & Skilled Trades",
-      "Other",
-    ])
+  body("category_id")
+    .isInt({ min: 1 })
     .withMessage("Please select a valid job category"),
 
   body("country")
@@ -157,26 +140,9 @@ const validateJobUpdate = [
     .isLength({ min: 50, max: 5000 })
     .withMessage("Job description must be between 50 and 5000 characters"),
 
-  body("category")
+  body("category_id")
     .optional()
-    .trim()
-    .isIn([
-      "Domestic Work",
-      "Construction & Manual Labor",
-      "Security Services",
-      "Driving & Transport",
-      "Hospitality & Tourism",
-      "Healthcare & Nursing",
-      "Education & Teaching",
-      "Sales & Retail",
-      "Agriculture & Farming",
-      "Cleaning & Maintenance",
-      "IT & Technical",
-      "Office & Administration",
-      "Beauty & Personal Care",
-      "Artisan & Skilled Trades",
-      "Other",
-    ])
+    .isInt({ min: 1 })
     .withMessage("Please select a valid job category"),
 
   body("country")

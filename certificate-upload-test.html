@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobPop - Certificate Upload Test</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+      }
+      input[type="email"],
+      input[type="password"],
+      input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      input[type="file"] {
+        padding: 10px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 14px;
+      }
+      .success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+      }
+      .certificate-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 15px;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .status-verified {
+        background: #28a745;
+        color: white;
+      }
+      .status-pending {
+        background: #ffc107;
+        color: #212529;
+      }
+      .status-none {
+        background: #6c757d;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏢 JobPop Certificate Upload Test</h1>
+
+      <!-- Login Section -->
+      <div class="form-group">
+        <h3>1. Login First</h3>
+        <label for="email">Email:</label>
+        <input
+          type="email"
+          id="email"
+          value="grealmkids@gmail.com"
+          placeholder="Enter your email" />
+
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password" />
+
+        <button onclick="login()">Login</button>
+        <button onclick="getProfile()">Get Profile</button>
+      </div>
+
+      <!-- Certificate Management Section -->
+      <div class="form-group">
+        <h3>2. Certificate Management</h3>
+        <button onclick="getCertificateInfo()">Get Certificate Info</button>
+
+        <label for="certificate"
+          >Upload Certificate (PDF, JPG, PNG - Max 2MB):</label
+        >
+        <input type="file" id="certificate" accept=".pdf,.jpg,.jpeg,.png" />
+
+        <button onclick="uploadCertificate()">Upload Certificate</button>
+        <button onclick="removeCertificate()" style="background: #dc3545">
+          Remove Certificate
+        </button>
+      </div>
+
+      <!-- Response Section -->
+      <div id="response"></div>
+    </div>
+
+    <script>
+      let authToken = localStorage.getItem("authToken") || "";
+      const API_BASE = "http://localhost:3001/api";
+
+      // Update token display
+      function updateTokenDisplay() {
+        if (authToken) {
+          showResponse(
+            `✅ Logged in. Token: ${authToken.substring(0, 20)}...`,
+            "info"
+          );
+        }
+      }
+
+      // Show response
+      function showResponse(message, type = "info") {
+        const responseDiv = document.getElementById("response");
+        responseDiv.innerHTML = message;
+        responseDiv.className = `response ${type}`;
+      }
+
+      // Login function
+      async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        if (!email || !password) {
+          showResponse("Please enter both email and password", "error");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.data.token) {
+            authToken = data.data.token;
+            localStorage.setItem("authToken", authToken);
+            showResponse(
+              `✅ Login successful!\n\n${JSON.stringify(data, null, 2)}`,
+              "success"
+            );
+          } else {
+            showResponse(
+              `❌ Login failed: ${data.message}\n\n${JSON.stringify(
+                data,
+                null,
+                2
+              )}`,
+              "error"
+            );
+          }
+        } catch (error) {
+          showResponse(`❌ Login error: ${error.message}`, "error");
+        }
+      }
+
+      // Get profile
+      async function getProfile() {
+        if (!authToken) {
+          showResponse("Please login first", "error");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/profile`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          const data = await response.json();
+          showResponse(
+            `Profile Data:\n\n${JSON.stringify(data, null, 2)}`,
+            data.success ? "success" : "error"
+          );
+        } catch (error) {
+          showResponse(`❌ Profile error: ${error.message}`, "error");
+        }
+      }
+
+      // Get certificate info
+      async function getCertificateInfo() {
+        if (!authToken) {
+          showResponse("Please login first", "error");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/companies/certificate`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          const data = await response.json();
+          showResponse(
+            `Certificate Info:\n\n${JSON.stringify(data, null, 2)}`,
+            data.success ? "success" : "error"
+          );
+        } catch (error) {
+          showResponse(`❌ Get certificate error: ${error.message}`, "error");
+        }
+      }
+
+      // Upload certificate
+      async function uploadCertificate() {
+        if (!authToken) {
+          showResponse("Please login first", "error");
+          return;
+        }
+
+        const fileInput = document.getElementById("certificate");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          showResponse("Please select a certificate file", "error");
+          return;
+        }
+
+        // Validate file size (2MB = 2097152 bytes)
+        if (file.size > 2097152) {
+          showResponse("File too large. Maximum size is 2MB.", "error");
+          return;
+        }
+
+        // Validate file type
+        const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+        if (!allowedTypes.includes(file.type)) {
+          showResponse(
+            "Invalid file type. Please upload PDF, JPG, or PNG files only.",
+            "error"
+          );
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("certificate", file);
+
+        try {
+          showResponse("Uploading certificate... Please wait.", "info");
+
+          const response = await fetch(`${API_BASE}/companies/certificate`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: formData,
+          });
+
+          const data = await response.json();
+          showResponse(
+            `Upload Result:\n\n${JSON.stringify(data, null, 2)}`,
+            data.success ? "success" : "error"
+          );
+
+          // Clear file input
+          fileInput.value = "";
+        } catch (error) {
+          showResponse(`❌ Upload error: ${error.message}`, "error");
+        }
+      }
+
+      // Remove certificate
+      async function removeCertificate() {
+        if (!authToken) {
+          showResponse("Please login first", "error");
+          return;
+        }
+
+        if (
+          !confirm(
+            "Are you sure you want to remove your certificate? This will reset your verification status."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/companies/certificate`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          const data = await response.json();
+          showResponse(
+            `Remove Result:\n\n${JSON.stringify(data, null, 2)}`,
+            data.success ? "success" : "error"
+          );
+        } catch (error) {
+          showResponse(`❌ Remove error: ${error.message}`, "error");
+        }
+      }
+
+      // Initialize
+      updateTokenDisplay();
+    </script>
+  </body>
+</html>

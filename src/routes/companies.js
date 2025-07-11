@@ -4,7 +4,7 @@ const companyController = require("../controllers/companyController");
 const { authenticateToken } = require("../middleware/auth");
 const { upload, handleUploadError } = require("../middleware/upload");
 
-// Protected routes
+// Certificate management routes
 router.post(
   "/certificate",
   authenticateToken,
@@ -13,6 +13,19 @@ router.post(
   companyController.uploadCertificate
 );
 
+router.get(
+  "/certificate",
+  authenticateToken,
+  companyController.getCertificateInfo
+);
+
+router.delete(
+  "/certificate",
+  authenticateToken,
+  companyController.removeCertificate
+);
+
+// Company information routes
 router.get("/me", authenticateToken, companyController.getCompanyInfo);
 router.get(
   "/verification-status",

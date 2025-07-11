@@ -69,7 +69,7 @@ const createJob = async (req, res) => {
     const {
       title,
       description,
-      category,
+      category_id,
       country,
       salary,
       deadline,
@@ -80,14 +80,28 @@ const createJob = async (req, res) => {
       application_link,
     } = req.body;
 
+    // Get company name for the job
+    const { data: company, error: companyError } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .single();
+
+    if (companyError || !company) {
+      return res
+        .status(400)
+        .json(formatResponse(false, null, "Company not found"));
+    }
+
     // Create job data object
     const jobData = {
       title,
-      description,
-      category,
+      job_description: description, // Map description to job_description for database
+      category_id,
       country,
       deadline: new Date(deadline).toISOString(),
       company_id: companyId,
+      company: company.name, // Add company name
       created_at: new Date().toISOString(),
     };
 
@@ -130,7 +144,7 @@ const updateJob = async (req, res) => {
     const {
       title,
       description,
-      category,
+      category_id,
       country,
       salary,
       deadline,
@@ -158,8 +172,8 @@ const updateJob = async (req, res) => {
     // Build update object with only provided fields
     const updates = {};
     if (title) updates.title = title;
-    if (description) updates.description = description;
-    if (category) updates.category = category;
+    if (description) updates.job_description = description; // Map description to job_description
+    if (category_id) updates.category_id = category_id;
     if (country) updates.country = country;
     if (salary) updates.salary = salary;
     if (deadline) updates.deadline = new Date(deadline).toISOString();
@@ -242,29 +256,20 @@ const deleteJob = async (req, res) => {
 // Get job categories
 const getJobCategories = async (req, res) => {
   try {
-    const categories = [
-      "Domestic Work",
-      "Construction & Manual Labor",
-      "Security Services",
-      "Driving & Transport",
-      "Hospitality & Tourism",
-      "Healthcare & Nursing",
-      "Education & Teaching",
-      "Sales & Retail",
-      "Agriculture & Farming",
-      "Cleaning & Maintenance",
-      "IT & Technical",
-      "Office & Administration",
-      "Beauty & Personal Care",
-      "Artisan & Skilled Trades",
-      "Other",
-    ];
-
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, description")
+      .order("name", { ascending: true });
+    if (error) {
+      return res
+        .status(500)
+        .json(formatResponse(false, null, "Failed to fetch categories"));
+    }
     res.json(
       formatResponse(
         true,
-        { categories },
-        "Job categories retrieved successfully"
+        { categories: data },
+        "Categories retrieved successfully"
       )
     );
   } catch (error) {
@@ -332,7 +337,9 @@ const getJobStats = async (req, res) => {
       console.error("Monthly jobs count error:", monthlyError);
       return res
         .status(500)
-        .json(formatResponse(false, null, "Failed to get monthly job statistics"));
+        .json(
+          formatResponse(false, null, "Failed to get monthly job statistics")
+        );
     }
 
     // Get active jobs (not expired)
@@ -346,7 +353,9 @@ const getJobStats = async (req, res) => {
       console.error("Active jobs count error:", activeError);
       return res
         .status(500)
-        .json(formatResponse(false, null, "Failed to get active job statistics"));
+        .json(
+          formatResponse(false, null, "Failed to get active job statistics")
+        );
     }
 
     const stats = {
@@ -356,7 +365,9 @@ const getJobStats = async (req, res) => {
       expiredJobs: (totalJobs || 0) - (activeJobs || 0),
     };
 
-    res.json(formatResponse(true, { stats }, "Job statistics retrieved successfully"));
+    res.json(
+      formatResponse(true, { stats }, "Job statistics retrieved successfully")
+    );
   } catch (error) {
     console.error("Get job stats error:", error);
     res.status(500).json(formatResponse(false, null, "Internal server error"));
