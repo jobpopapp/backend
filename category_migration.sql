@@ -1,41 +1,44 @@
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    name VARCHAR(100) UNIQUE NOT NULL
 );
 
 ALTER TABLE jobs ADD COLUMN category_id INTEGER REFERENCES categories(id);
 
+-- Add new columns for city, whatsapp, job_type
+ALTER TABLE jobs ADD COLUMN city VARCHAR(100);
+ALTER TABLE jobs ADD COLUMN whatsapp VARCHAR(20);
+ALTER TABLE jobs ADD COLUMN job_type VARCHAR(20);
+
 
 ALTER TABLE jobs DROP COLUMN category;
 
-INSERT INTO categories (name, description) VALUES
-    ('Technology', 'Tech and IT related jobs'),
-    ('Education', 'Teaching and academic jobs'),
-    ('Healthcare', 'Medical and healthcare jobs'),
-    ('Construction', 'Building and construction jobs'),
-    ('Hospitality', 'Hotel, restaurant, and catering jobs'),
-    ('Agriculture', 'Farming and agricultural jobs'),
-    ('Engineering', 'Engineering and technical jobs'),
-    ('Transportation', 'Driving and transport jobs'),
-    ('Security', 'Security and protection jobs'),
-    ('Domestic Work', 'Housekeeping, nanny, and domestic jobs'),
-    ('Sales & Marketing', 'Sales, marketing, and business development'),
-    ('Finance & Accounting', 'Finance, accounting, and banking'),
-    ('Administration', 'Administrative and office jobs'),
-    ('Manufacturing', 'Factory and manufacturing jobs'),
-    ('Retail', 'Retail and shop jobs'),
-    ('Customer Service', 'Customer support and call center jobs'),
-    ('Legal', 'Legal and paralegal jobs'),
-    ('Media & Communication', 'Media, journalism, and communication'),
-    ('Science & Research', 'Scientific and research jobs'),
-    ('Social Work', 'Social work and community service'),
-    ('Arts & Entertainment', 'Arts, music, and entertainment'),
-    ('Sports & Fitness', 'Sports, coaching, and fitness jobs'),
-    ('Tourism & Travel', 'Tourism, travel, and tour guide jobs'),
-    ('Logistics & Supply Chain', 'Logistics, warehousing, and supply chain'),
-    ('Cleaning & Maintenance', 'Cleaning, janitorial, and maintenance jobs')
+INSERT INTO categories (name) VALUES
+    ('Technology'),
+    ('Education'),
+    ('Healthcare'),
+    ('Construction'),
+    ('Hospitality'),
+    ('Agriculture'),
+    ('Engineering'),
+    ('Transportation'),
+    ('Security'),
+    ('Domestic Work'),
+    ('Sales & Marketing'),
+    ('Finance & Accounting'),
+    ('Administration'),
+    ('Manufacturing'),
+    ('Retail'),
+    ('Customer Service'),
+    ('Legal'),
+    ('Media & Communication'),
+    ('Science & Research'),
+    ('Social Work'),
+    ('Arts & Entertainment'),
+    ('Sports & Fitness'),
+    ('Tourism & Travel'),
+    ('Logistics & Supply Chain'),
+    ('Cleaning & Maintenance')
 ON CONFLICT (name) DO NOTHING;
 
 

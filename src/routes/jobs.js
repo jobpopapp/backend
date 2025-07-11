@@ -42,7 +42,6 @@ router.post(
   authenticateToken,
   requireVerification,
   requireActiveSubscription,
-  validateJobCreation,
   jobController.createJob
 );
 
@@ -51,7 +50,6 @@ router.put(
   authenticateToken,
   requireVerification,
   requireActiveSubscription,
-  validateJobUpdate,
   jobController.updateJob
 );
 

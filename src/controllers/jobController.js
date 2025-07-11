@@ -68,50 +68,49 @@ const createJob = async (req, res) => {
     const companyId = req.companyId;
     const {
       title,
-      description,
-      category_id,
+      company,
       country,
+      city,
       salary,
       deadline,
-      is_foreign,
-      email,
-      phone,
-      whatsapp,
+      job_description,
+      requirements,
       application_link,
+      email,
+      company_website,
+      phone,
+      company_id,
+      is_foreign,
+      whatsapp,
+      category_id,
+      job_type,
     } = req.body;
 
     // Get company name for the job
-    const { data: company, error: companyError } = await supabase
-      .from("companies")
-      .select("name")
-      .eq("id", companyId)
-      .single();
-
-    if (companyError || !company) {
-      return res
-        .status(400)
-        .json(formatResponse(false, null, "Company not found"));
-    }
+    // companyId is either from req.companyId or from payload
+    const finalCompanyId = company_id || req.companyId;
 
     // Create job data object
     const jobData = {
       title,
-      job_description: description, // Map description to job_description for database
-      category_id,
+      company,
       country,
-      deadline: new Date(deadline).toISOString(),
-      company_id: companyId,
-      company: company.name, // Add company name
+      city,
+      salary,
+      deadline: deadline ? new Date(deadline).toISOString() : undefined,
+      job_description,
+      requirements,
+      application_link,
+      email,
+      company_website,
+      phone,
+      company_id: finalCompanyId,
+      is_foreign,
+      whatsapp,
+      category_id,
+      job_type,
       created_at: new Date().toISOString(),
     };
-
-    // Add optional fields if provided
-    if (salary) jobData.salary = salary;
-    if (is_foreign !== undefined) jobData.is_foreign = is_foreign;
-    if (email) jobData.email = email;
-    if (phone) jobData.phone = phone;
-    if (whatsapp) jobData.whatsapp = whatsapp;
-    if (application_link) jobData.application_link = application_link;
 
     // Insert job into database
     const { data: job, error } = await supabase
@@ -143,16 +142,22 @@ const updateJob = async (req, res) => {
     const companyId = req.companyId;
     const {
       title,
-      description,
-      category_id,
+      company,
       country,
+      city,
       salary,
       deadline,
-      is_foreign,
-      email,
-      phone,
-      whatsapp,
+      job_description,
+      requirements,
       application_link,
+      email,
+      company_website,
+      phone,
+      company_id,
+      is_foreign,
+      whatsapp,
+      category_id,
+      job_type,
     } = req.body;
 
     // Check if job exists and belongs to the company
@@ -172,16 +177,22 @@ const updateJob = async (req, res) => {
     // Build update object with only provided fields
     const updates = {};
     if (title) updates.title = title;
-    if (description) updates.job_description = description; // Map description to job_description
-    if (category_id) updates.category_id = category_id;
+    if (company) updates.company = company;
     if (country) updates.country = country;
+    if (city) updates.city = city;
     if (salary) updates.salary = salary;
     if (deadline) updates.deadline = new Date(deadline).toISOString();
-    if (is_foreign !== undefined) updates.is_foreign = is_foreign;
-    if (email) updates.email = email;
-    if (phone) updates.phone = phone;
-    if (whatsapp) updates.whatsapp = whatsapp;
+    if (job_description) updates.job_description = job_description;
+    if (requirements) updates.requirements = requirements;
     if (application_link) updates.application_link = application_link;
+    if (email) updates.email = email;
+    if (company_website) updates.company_website = company_website;
+    if (phone) updates.phone = phone;
+    if (company_id) updates.company_id = company_id;
+    if (is_foreign !== undefined) updates.is_foreign = is_foreign;
+    if (whatsapp) updates.whatsapp = whatsapp;
+    if (category_id) updates.category_id = category_id;
+    if (job_type) updates.job_type = job_type;
 
     if (Object.keys(updates).length === 0) {
       return res
@@ -258,20 +269,14 @@ const getJobCategories = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, description")
+      .select("id, name")
       .order("name", { ascending: true });
     if (error) {
       return res
         .status(500)
         .json(formatResponse(false, null, "Failed to fetch categories"));
     }
-    res.json(
-      formatResponse(
-        true,
-        { categories: data },
-        "Categories retrieved successfully"
-      )
-    );
+    res.json(formatResponse(true, data, "Categories retrieved successfully"));
   } catch (error) {
     console.error("Get categories error:", error);
     res.status(500).json(formatResponse(false, null, "Internal server error"));

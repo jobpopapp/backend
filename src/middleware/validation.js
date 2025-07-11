@@ -60,6 +60,23 @@ const validateCompanyLogin = [
 
 // Job creation validation
 const validateJobCreation = [
+  body("city")
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("City name must be between 2 and 100 characters"),
+
+  body("whatsapp")
+    .optional()
+    .trim()
+    .isLength({ min: 7, max: 20 })
+    .withMessage("WhatsApp number must be valid"),
+
+  body("job_type")
+    .optional()
+    .isIn(["full-time", "part-time", "contract", "temporary", "internship"])
+    .withMessage(
+      "Job type must be one of: full-time, part-time, contract, temporary, internship"
+    ),
   body("title")
     .trim()
     .isLength({ min: 5, max: 100 })
@@ -128,6 +145,24 @@ const validateJobCreation = [
 
 // Job update validation (similar to creation but all fields optional)
 const validateJobUpdate = [
+  body("city")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("City name must be between 2 and 100 characters"),
+
+  body("whatsapp")
+    .optional()
+    .trim()
+    .isLength({ min: 7, max: 20 })
+    .withMessage("WhatsApp number must be valid"),
+
+  body("job_type")
+    .optional()
+    .isIn(["full-time", "part-time", "contract", "temporary", "internship"])
+    .withMessage(
+      "Job type must be one of: full-time, part-time, contract, temporary, internship"
+    ),
   body("title")
     .optional()
     .trim()
