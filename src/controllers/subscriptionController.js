@@ -1,4 +1,5 @@
 const { supabase } = require("../config/supabase");
+const webSocket = require("../utils/websocket");
 const {
   formatResponse,
   generatePaymentReference,
@@ -7,6 +8,11 @@ const {
 } = require("../utils/helpers");
 
 // Get subscription plans
+const handlePaymentCallback = (req, res) => {
+  // Your callback logic here
+  res.sendStatus(200);
+};
+
 const getSubscriptionPlans = async (req, res) => {
   try {
     const plans = [
@@ -128,116 +134,34 @@ const getCurrentSubscription = async (req, res) => {
   }
 };
 
-// Initiate subscription payment
-const initiatePayment = async (req, res) => {
-  try {
-    const companyId = req.companyId;
-    const { planType } = req.body;
+// Pesapal IPN Callback
+const handleCallback = async (req, res) => {
+  const { OrderTrackingId, OrderNotificationType, OrderMerchantReference } =
+    req.query;
 
-    // Validate plan type
-    const planDetails = getSubscriptionPlanDetails(planType);
-    if (!planDetails) {
-      return res
-        .status(400)
-        .json(formatResponse(false, null, "Invalid subscription plan"));
+  if (OrderNotificationType === "IPN") {
+    const { data: subscription, error } = await supabase
+      .from("subscriptions")
+      .update({ status: "ACTIVE", pesapal_tracking_id: OrderTrackingId })
+      .eq("pesapal_tracking_id", OrderMerchantReference)
+      .select();
+
+    if (error) {
+      console.error("Error updating subscription:", error);
+      return res.status(500).send("Error updating subscription");
     }
 
-    // Generate payment reference
-    const paymentReference = generatePaymentReference();
+    webSocket.send({
+      type: "SUBSCRIPTION_UPDATE",
+      companyId: subscription[0].company_id,
+      status: "ACTIVE",
+    });
 
-    // For now, we'll simulate payment initiation
-    // In production, you would integrate with Pesapal API here
-    const paymentData = {
-      reference: paymentReference,
-      amount: planDetails.cost,
-      currency: "USD",
-      plan_type: planType,
-      plan_name: planDetails.name,
-      company_id: companyId,
-      payment_url: `https://sandbox.pesapal.com/payment/${paymentReference}`, // This would be from Pesapal
-      status: "pending",
-    };
-
-    // Store payment intent in database (you might want to create a payments table)
-    // For now, we'll just return the payment data
-
-    res.json(
-      formatResponse(
-        true,
-        {
-          payment: paymentData,
-          instructions: [
-            "Click the payment URL to complete payment",
-            "You will be redirected back to the dashboard after payment",
-            "Your subscription will be activated automatically",
-          ],
-        },
-        "Payment initiated successfully"
-      )
+    res.status(200).send("Callback received");
+  } else {
+    res.redirect(
+      `${process.env.FRONTEND_URL}/payment-complete?tracking_id=${OrderTrackingId}`
     );
-  } catch (error) {
-    console.error("Initiate payment error:", error);
-    res.status(500).json(formatResponse(false, null, "Internal server error"));
-  }
-};
-
-// Handle payment callback (webhook)
-const handlePaymentCallback = async (req, res) => {
-  try {
-    // This would be called by Pesapal webhook
-    const { reference, status, plan_type, company_id } = req.body;
-
-    if (status === "completed" || status === "success") {
-      // Payment successful, create or update subscription
-      const planDetails = getSubscriptionPlanDetails(plan_type);
-      const startDate = new Date();
-      const endDate = calculateSubscriptionEndDate(plan_type, startDate);
-
-      const subscriptionData = {
-        company_id,
-        plan_type,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        is_active: true,
-        auto_renew: false,
-        pesapal_txn_id: reference,
-        created_at: new Date().toISOString(),
-      };
-
-      // Deactivate any existing active subscriptions
-      await supabase
-        .from("subscriptions")
-        .update({ is_active: false })
-        .eq("company_id", company_id)
-        .eq("is_active", true);
-
-      // Create new subscription
-      const { data: subscription, error } = await supabase
-        .from("subscriptions")
-        .insert([subscriptionData])
-        .select("*")
-        .single();
-
-      if (error) {
-        console.error("Create subscription error:", error);
-        return res
-          .status(500)
-          .json(formatResponse(false, null, "Failed to activate subscription"));
-      }
-
-      res.json(
-        formatResponse(
-          true,
-          { subscription },
-          "Subscription activated successfully"
-        )
-      );
-    } else {
-      res.json(formatResponse(false, null, "Payment failed or cancelled"));
-    }
-  } catch (error) {
-    console.error("Payment callback error:", error);
-    res.status(500).json(formatResponse(false, null, "Internal server error"));
   }
 };
 
@@ -247,7 +171,6 @@ const simulatePaymentSuccess = async (req, res) => {
     const companyId = req.companyId;
     const { planType } = req.body;
 
-    // Validate plan type
     const planDetails = getSubscriptionPlanDetails(planType);
     if (!planDetails) {
       return res
@@ -269,14 +192,12 @@ const simulatePaymentSuccess = async (req, res) => {
       created_at: new Date().toISOString(),
     };
 
-    // Deactivate any existing active subscriptions
     await supabase
       .from("subscriptions")
       .update({ is_active: false })
       .eq("company_id", companyId)
       .eq("is_active", true);
 
-    // Create new subscription
     const { data: subscription, error } = await supabase
       .from("subscriptions")
       .insert([subscriptionData])
@@ -303,10 +224,15 @@ const simulatePaymentSuccess = async (req, res) => {
   }
 };
 
+exports.handlePaymentCallback = (req, res) => {
+  // Your callback logic here
+  res.sendStatus(200);
+};
+
 module.exports = {
   getSubscriptionPlans,
   getCurrentSubscription,
-  initiatePayment,
-  handlePaymentCallback,
+  handleCallback,
   simulatePaymentSuccess,
+  handlePaymentCallback,
 };

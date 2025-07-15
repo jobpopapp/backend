@@ -23,11 +23,20 @@ router.get(
   subscriptionController.getCurrentSubscription
 );
 
+const pesapalController = require("../controllers/pesapalController");
 router.post(
   "/initiate",
   authenticateToken,
   requireVerification,
-  subscriptionController.initiatePayment
+  pesapalController.submitOrder
+);
+
+// Add support for /payment/initiate endpoint
+router.post(
+  "/payment/initiate",
+  authenticateToken,
+  requireVerification,
+  pesapalController.submitOrder
 );
 
 // Test route for development

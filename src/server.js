@@ -10,9 +10,13 @@ const config = require("./config");
 const authRoutes = require("./routes/auth");
 const companyRoutes = require("./routes/companies");
 const jobRoutes = require("./routes/jobs");
-const subscriptionRoutes = require("./routes/subscription");
+const subscriptionRoutes = require('./routes/subscription');
+const billingRoutes = require('./routes/billing');
 
 const app = express();
+const server = require('http').createServer(app);
+const webSocket = require('./utils/websocket');
+webSocket.init(server);
 
 // Trust proxy (important for rate limiting behind reverse proxy)
 app.set("trust proxy", 1);
@@ -97,7 +101,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/jobs", jobRoutes);
-app.use("/api/subscription", subscriptionRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/billing-address', billingRoutes);
 const categoryRoutes = require("./routes/categories");
 app.use("/api/categories", categoryRoutes);
 
@@ -128,7 +133,7 @@ app.use((error, req, res, next) => {
 // Start server
 const PORT = config.port;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 JobPop Company Backend running on port ${PORT}`);
   console.log(`📝 Environment: ${config.nodeEnv}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);

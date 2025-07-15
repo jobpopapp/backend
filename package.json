@@ -21,6 +21,7 @@
   "description": "JobPop Hiring Company Backend API - Express.js server for company registration, job management, and subscription handling",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
+    "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.1.0",
@@ -30,7 +31,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
