@@ -1,20 +1,4 @@
-am still getting node src/server.js
-[dotenv@17.1.0] injecting env (9) from .env (tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild)
-C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\route.js:216
-        throw new Error(msg);
-        ^
+ - -
+POST /api/subscription/simulate-payment 200 1501.111 ms - 468
 
-Error: Route.post() requires a callback function but got a [object Undefined]
-    at Route.<computed> [as post] (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\route.js:216:15)
-    at proto.<computed> [as post] (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\index.js:521:19)
-    at Object.<anonymous> (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\routes\subscription.js:11:8)
-    at Module._compile (node:internal/modules/cjs/loader:1364:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
-    at Module.load (node:internal/modules/cjs/loader:1203:32)
-    at Module._load (node:internal/modules/cjs/loader:1019:12)
-    at Module.require (node:internal/modules/cjs/loader:1231:19)
-    at require (node:internal/modules/helpers:177:18)
-    at Object.<anonymous> (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\server.js:13:28)
-
-Node.js v18.20.6
-PS C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend> 
+what is happening? does this api return any values to the UI? which format?
