@@ -1,50 +1,22 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const subscriptionController = require("../controllers/subscriptionController");
-const {
-  authenticateToken,
-  requireVerification,
-} = require("../middleware/auth");
+const subscriptionController = require('../controllers/subscriptionController');
+const { authenticateToken } = require('../middleware/auth');
 
-// Public routes
-router.get("/plans", subscriptionController.getSubscriptionPlans);
-router.post("/callback", subscriptionController.handlePaymentCallback);
+// Pesapal IPN listener
+router.post('/ipn', subscriptionController.handleIpn);
 
-// Protected routes
-router.get(
-  "/current",
-  authenticateToken,
-  subscriptionController.getCurrentSubscription
-);
+// Pesapal callback URL
+router.get('/callback', subscriptionController.handleCallback);
 
-router.get(
-  "/status",
-  authenticateToken,
-  subscriptionController.getCurrentSubscription
-);
+// Get subscription status
+router.get('/status', authenticateToken, subscriptionController.getSubscriptionStatus);
 
-const pesapalController = require("../controllers/pesapalController");
-router.post(
-  "/initiate",
-  authenticateToken,
-  requireVerification,
-  pesapalController.submitOrder
-);
-
-// Add support for /payment/initiate endpoint
-router.post(
-  "/payment/initiate",
-  authenticateToken,
-  requireVerification,
-  pesapalController.submitOrder
-);
-
-// Test route for development
-router.post(
-  "/simulate-payment",
-  authenticateToken,
-  requireVerification,
-  subscriptionController.simulatePaymentSuccess
-);
+// CRUD for subscription plans
+router.get('/plans', subscriptionController.getSubscriptionPlans);
+router.get('/plans/:id', subscriptionController.getSubscriptionPlan);
+router.post('/plans', authenticateToken, subscriptionController.createSubscriptionPlan);
+router.put('/plans/:id', authenticateToken, subscriptionController.updateSubscriptionPlan);
+router.delete('/plans/:id', authenticateToken, subscriptionController.deleteSubscriptionPlan);
 
 module.exports = router;

@@ -1,4 +1,24 @@
- - -
-POST /api/subscription/simulate-payment 200 1501.111 ms - 468
 
-what is happening? does this api return any values to the UI? which format?
+
+POST /api/auth/login 200 1662.756 ms - 669
+GET /api/jobs/categories 304 753.349 ms - -
+GET /api/jobs?page=1&limit=5 304 1142.509 ms - -
+GET /api/jobs/stats 304 2790.974 ms - -
+GET /api/subscription/status 304 3049.217 ms - -
+GET /api/subscription/status 304 1826.094 ms - -
+C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\controllers\pesapalController.js:29
+        .from('billing_addresses')
+         ^
+
+TypeError: supabase.from is not a function
+    at exports.submitOrder (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\controllers\pesapalController.js:29:10)
+    at Layer.handle [as handle_request] (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\route.js:149:13)
+    at requireVerification (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\middleware\auth.js:71:3)
+    at Layer.handle [as handle_request] (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\node_modules\express\lib\router\route.js:149:13)
+    at authenticateToken (C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend\src\middleware\auth.js:38:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+Node.js v18.20.6
+PS C:\Users\dell\Documents\ALF CLIENTS\SHADIA\MODULES\jobpop-company-backend> 
