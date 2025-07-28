@@ -22,49 +22,48 @@ const getAuthToken = async () => {
 
 // Register IPN URL
 exports.registerIpnUrl = async (req, res) => {
-    const { url } = req.body;
-    if (!url) {
-        return res.status(400).json({ error: "Missing url for IPN registration." });
-    }
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: "Missing url for IPN registration." });
+  }
 
-    let token;
-    try {
-        token = await getAuthToken();
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
-    }
+  let token;
+  try {
+    token = await getAuthToken();
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 
-    const ipnPayload = {
-        url: url,
-        ipn_notification_type: "POST",
-    };
+  const ipnPayload = {
+    url: url,
+    ipn_notification_type: "POST",
+  };
 
-    try {
-        const response = await axios.post(
-            `${PESAPAL_API}/URLSetup/RegisterIPNURL`,
-            ipnPayload,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        );
+  try {
+    const response = await axios.post(
+      `${PESAPAL_API}/URLSetup/RegisterIPNURL`,
+      ipnPayload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-        res.json({
-            message: "IPN URL registered successfully. Please save the ipn_id from the response and set it as PESAPAL_IPN_ID in your .env file.",
-            data: response.data,
-        });
-
-    } catch (error) {
-        console.error(
-            "Pesapal IPN Registration Error:",
-            error.response ? error.response.data : error.message
-        );
-        res.status(500).json({ error: "Failed to register IPN URL with Pesapal." });
-    }
+    res.json({
+      message:
+        "IPN URL registered successfully. Please save the ipn_id from the response and set it as PESAPAL_IPN_ID in your .env file.",
+      data: response.data,
+    });
+  } catch (error) {
+    console.error(
+      "Pesapal IPN Registration Error:",
+      error.response ? error.response.data : error.message
+    );
+    res.status(500).json({ error: "Failed to register IPN URL with Pesapal." });
+  }
 };
-
 
 // Submit Order to Pesapal
 exports.submitOrder = async (req, res) => {
@@ -72,6 +71,9 @@ exports.submitOrder = async (req, res) => {
   const companyId = req.companyId;
 
   // 1. Get Billing Address
+  console.log(
+    `[Pesapal] Fetching billing address for company_id: ${companyId}`
+  );
   const { data: billingAddresses, error: addressError } = await supabase
     .from("billing_addresses")
     .select("*")
@@ -80,7 +82,10 @@ exports.submitOrder = async (req, res) => {
     .limit(1);
 
   if (addressError) {
-    console.error("Error fetching billing address:", addressError);
+    console.error(
+      `[Pesapal] Error fetching billing address for company_id: ${companyId}`,
+      addressError
+    );
     return res
       .status(500)
       .json({ error: "Could not retrieve billing address." });
@@ -92,6 +97,9 @@ exports.submitOrder = async (req, res) => {
       : null;
 
   if (!billingAddress) {
+    console.warn(
+      `[Pesapal] No billing address found for company_id: ${companyId}`
+    );
     return res
       .status(400)
       .json({ error: "Billing address not found. Please create one first." });

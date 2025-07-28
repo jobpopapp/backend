@@ -1,0 +1,82 @@
+Billing Address CRUD API Documentation
+=====================================
+
+1. Get Billing Address (Read)
+----------------------------
+Endpoint:
+  GET /api/billing-address
+
+Query Parameter:
+  company_id (required if not using JWT)
+
+Example:
+  GET http://localhost:3000/api/billing-address?company_id=<company_id>
+
+Response:
+{
+  "id": "c00fff2d-8508-45ab-b842-4d9fcf0917ad",
+  "company_id": "c00fff2d-8508-45ab-b842-4d9fcf0917ad",
+  "email_address": "billing@jobpop.com",
+  "phone_number": "+256700123456",
+  "country_code": "UG",
+  "first_name": "John",
+  "middle_name": null,
+  "last_name": "Doe",
+  "line_1": "123 Main St",
+  "line_2": null,
+  "city": "Kampala",
+  "state": null,
+  "postal_code": "10101",
+  "zip_code": null,
+  "created_at": "...",
+  "updated_at": "..."
+}
+
+2. Create/Update Billing Address (Upsert)
+-----------------------------------------
+Endpoint:
+  POST /api/billing-address
+
+Body:
+  All fields except id, created_at, updated_at are accepted.
+  company_id is required.
+
+Example:
+{
+  "company_id": "c00fff2d-8508-45ab-b842-4d9fcf0917ad",
+  "email_address": "billing@jobpop.com",
+  "phone_number": "+256700123456",
+  "country_code": "UG",
+  "first_name": "John",
+  "middle_name": null,
+  "last_name": "Doe",
+  "line_1": "123 Main St",
+  "line_2": null,
+  "city": "Kampala",
+  "state": null,
+  "postal_code": "10101",
+  "zip_code": null
+}
+
+Response:
+  The upserted billing address object.
+
+3. Delete Billing Address
+-------------------------
+Endpoint:
+  DELETE /api/billing-address
+
+Body:
+{
+  "company_id": "c00fff2d-8508-45ab-b842-4d9fcf0917ad"
+}
+
+Response:
+{
+  "success": true,
+  "data": [ ... ] // deleted record(s)
+}
+
+Note:
+- If JWT authentication is enabled, the backend will extract company_id from the token, and the frontend does not need to send it.
+- If JWT is disabled, the frontend must always provide company_id in the request.

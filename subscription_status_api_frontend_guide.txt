@@ -1,0 +1,58 @@
+# Subscription Status API Integration Guide
+
+## Endpoint
+`GET /api/subscription/status`
+
+## Description
+Fetches the current subscription status for the logged-in company. Returns details about the subscription, including whether it is active, the plan type, transaction ID, and the subscription period (start and end dates).
+
+## Example Response JSON
+```
+{
+  "is_active": true,
+  "plan_type": "monthly",
+  "pesapal_txn_id": null,
+  "start_date": "2025-07-28T00:00:00+00:00",
+  "end_date": "2025-08-28T00:00:00+00:00"
+}
+```
+
+- `is_active` (boolean): Whether the subscription is currently active.
+- `plan_type` (string): The type of subscription plan (e.g., "monthly", "yearly").
+- `pesapal_txn_id` (string|null): The Pesapal transaction ID, if available.
+- `start_date` (string): ISO 8601 date string for when the subscription started.
+- `end_date` (string): ISO 8601 date string for when the subscription will end.
+
+## Frontend Implementation Steps
+1. Make an authenticated GET request to `/api/subscription/status`.
+2. Parse the JSON response.
+3. Display the following to the user:
+   - Subscription status (active/inactive)
+   - Plan type
+   - Subscription start date
+   - Subscription end date
+   - (Optional) Pesapal transaction ID if available
+4. If `is_active` is `false`, prompt the user to subscribe or renew.
+5. Format the dates for user-friendly display (e.g., `28 Jul 2025`).
+
+## Example Usage (Angular/TypeScript)
+```typescript
+// Example service method
+getSubscriptionStatus(): Observable<SubscriptionStatus> {
+  return this.http.get<SubscriptionStatus>('/api/subscription/status');
+}
+
+// Example interface
+interface SubscriptionStatus {
+  is_active: boolean;
+  plan_type: string;
+  pesapal_txn_id: string | null;
+  start_date: string;
+  end_date: string;
+}
+```
+
+## Notes
+- Always check for `is_active` before granting access to premium features.
+- Handle cases where `pesapal_txn_id` is `null`.
+- Use the `start_date` and `end_date` to show the subscription period to the user.

@@ -10,13 +10,13 @@ const config = require("./config");
 const authRoutes = require("./routes/auth");
 const companyRoutes = require("./routes/companies");
 const jobRoutes = require("./routes/jobs");
-const subscriptionRoutes = require('./routes/subscription');
-const billingRoutes = require('./routes/billing');
-const pesapalRoutes = require('./routes/pesapal'); // Import pesapal routes
+const subscriptionRoutes = require("./routes/subscription");
+const billingRoutes = require("./routes/billing");
+const pesapalRoutes = require("./routes/pesapal"); // Import pesapal routes
 
 const app = express();
-const server = require('http').createServer(app);
-const webSocket = require('./utils/websocket');
+const server = require("http").createServer(app);
+const webSocket = require("./utils/websocket");
 webSocket.init(server);
 
 // Trust proxy (important for rate limiting behind reverse proxy)
@@ -102,9 +102,10 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/jobs", jobRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/billing-address', billingRoutes);
-app.use('/api/pesapal', pesapalRoutes); // Use pesapal routes
+app.use("/api/subscription", subscriptionRoutes);
+console.log("Registering /api/billing-address route");
+app.use("/api/billing-address", billingRoutes);
+app.use("/api/pesapal", pesapalRoutes); // Use pesapal routes
 const categoryRoutes = require("./routes/categories");
 app.use("/api/categories", categoryRoutes);
 
@@ -151,6 +152,10 @@ server.listen(PORT, () => {
     console.log("  GET  /api/jobs/categories");
     console.log("  GET  /api/jobs/my");
     console.log("  POST /api/jobs");
+    console.log("  GET  /api/billing-address");
+    console.log("  POST /api/billing-address");
+    console.log("  PUT  /api/billing-address/:id");
+    console.log("  DELETE /api/billing-address/:id");
     console.log("  GET  /api/subscription/plans");
     console.log("  POST /api/subscription/simulate-payment");
     console.log("");

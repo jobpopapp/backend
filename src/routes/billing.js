@@ -3,7 +3,8 @@ const router = express.Router();
 const billingController = require("../controllers/billingController");
 const { authenticateToken } = require("../middleware/auth");
 
-router.get("/", authenticateToken, billingController.getBillingAddress);
-router.post("/", authenticateToken, billingController.upsertBillingAddress);
+router.get("/", billingController.getBillingAddress);
+router.post("/", billingController.upsertBillingAddress);
+router.delete("/", billingController.deleteBillingAddress);
 
 module.exports = router;
