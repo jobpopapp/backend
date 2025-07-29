@@ -5,30 +5,12 @@ const { formatResponse } = require("../utils/helpers");
 const getMyJobs = async (req, res) => {
   try {
     const companyId = req.companyId;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
 
-    // Get total count
-    const { count, error: countError } = await supabase
-      .from("jobs")
-      .select("*", { count: "exact", head: true })
-      .eq("company_id", companyId);
-
-    if (countError) {
-      console.error("Count error:", countError);
-      return res
-        .status(500)
-        .json(formatResponse(false, null, "Failed to get job count"));
-    }
-
-    // Get jobs with pagination
     const { data: jobs, error } = await supabase
       .from("jobs")
       .select("*")
       .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Get jobs error:", error);
@@ -37,25 +19,7 @@ const getMyJobs = async (req, res) => {
         .json(formatResponse(false, null, "Failed to retrieve jobs"));
     }
 
-    const totalPages = Math.ceil(count / limit);
-
-    res.json(
-      formatResponse(
-        true,
-        {
-          jobs,
-          pagination: {
-            page,
-            limit,
-            total: count,
-            totalPages,
-            hasNext: page < totalPages,
-            hasPrev: page > 1,
-          },
-        },
-        "Jobs retrieved successfully"
-      )
-    );
+    res.json(formatResponse(true, jobs, "Jobs retrieved successfully"));
   } catch (error) {
     console.error("Get my jobs error:", error);
     res.status(500).json(formatResponse(false, null, "Internal server error"));
