@@ -79,6 +79,7 @@ exports.handleCallback = async (req, res) => {
 // Get all subscription plans
 exports.getSubscriptionPlans = async (req, res) => {
   const { data, error } = await supabase.from("subscription_plans").select("*");
+  console.log("[SubscriptionPlans][DEBUG] Query result:", { data, error });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 };
