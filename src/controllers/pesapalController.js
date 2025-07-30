@@ -144,7 +144,14 @@ exports.submitOrder = async (req, res) => {
       phone_number: billingAddress.phone_number,
       country_code: billingAddress.country_code,
       first_name: billingAddress.first_name,
+      middle_name: billingAddress.middle_name,
       last_name: billingAddress.last_name,
+      line_1: billingAddress.line_1,
+      line_2: billingAddress.line_2,
+      city: billingAddress.city,
+      state: billingAddress.state,
+      postal_code: billingAddress.postal_code,
+      zip_code: billingAddress.zip_code,
     },
   };
 
