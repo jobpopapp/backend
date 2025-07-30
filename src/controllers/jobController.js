@@ -8,7 +8,7 @@ const getMyJobs = async (req, res) => {
 
     const { data: jobs, error } = await supabase
       .from("jobs")
-      .select("*")
+      .select("*, categories(name)")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
 
@@ -255,7 +255,7 @@ const getJobById = async (req, res) => {
 
     const { data: job, error } = await supabase
       .from("jobs")
-      .select("*")
+      .select("*, categories(name)")
       .eq("id", jobId)
       .eq("company_id", companyId)
       .single();
@@ -366,7 +366,7 @@ const getAllJobs = async (req, res) => {
     // Get jobs with pagination
     const { data: jobs, error } = await supabase
       .from("jobs")
-      .select("*")
+      .select("*, categories(name)")
       .gte("deadline", new Date().toISOString()) // Only active jobs
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
