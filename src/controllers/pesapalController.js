@@ -203,6 +203,8 @@ exports.submitOrder = async (req, res) => {
       pesapal_txn_id: response.data.order_tracking_id,
       start_date: now.toISOString(),
       end_date: endDate ? endDate.toISOString() : null,
+      transactionstatus: "pending",
+      redirect_url: response.data.redirect_url || null,
     });
     const { data: upsertData, error: upsertError } = await supabase
       .from("subscriptions")
@@ -214,6 +216,8 @@ exports.submitOrder = async (req, res) => {
             pesapal_txn_id: response.data.order_tracking_id, // Use order_tracking_id
             start_date: now.toISOString(),
             end_date: endDate ? endDate.toISOString() : null,
+            transactionstatus: "pending",
+            redirect_url: response.data.redirect_url || null,
           },
         ],
         { onConflict: ["company_id"] }
