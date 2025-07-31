@@ -185,14 +185,47 @@ exports.submitOrder = async (req, res) => {
     );
 
     // 6. Save transaction details for reconciliation
-    await supabase.from("subscriptions").insert([
-      {
-        company_id: companyId,
-        plan_type: planType,
-        pesapal_tracking_id: response.data.order_tracking_id, // Use order_tracking_id
-        status: "PENDING",
-      },
-    ]);
+    // Calculate start_date and end_date
+    const now = new Date();
+    let endDate = null;
+    if (planType === "monthly") {
+      endDate = new Date(now);
+      endDate.setDate(now.getDate() + 30);
+    } else if (planType === "annual") {
+      endDate = new Date(now);
+      endDate.setDate(now.getDate() + 365);
+    }
+    // For per_job, endDate remains null
+
+    console.log("[Pesapal] Inserting subscription record:", {
+      company_id: companyId,
+      plan_type: planType,
+      pesapal_txn_id: response.data.order_tracking_id,
+      start_date: now.toISOString(),
+      end_date: endDate ? endDate.toISOString() : null,
+    });
+    const { data: upsertData, error: upsertError } = await supabase
+      .from("subscriptions")
+      .upsert(
+        [
+          {
+            company_id: companyId,
+            plan_type: planType,
+            pesapal_txn_id: response.data.order_tracking_id, // Use order_tracking_id
+            start_date: now.toISOString(),
+            end_date: endDate ? endDate.toISOString() : null,
+          },
+        ],
+        { onConflict: ["company_id"] }
+      );
+    if (upsertError) {
+      console.error(
+        "[Pesapal] Error upserting subscription record:",
+        upsertError
+      );
+    } else {
+      console.log("[Pesapal] Subscription record upserted:", upsertData);
+    }
 
     // Return only the required fields to the frontend in the specified format
     res.json({
