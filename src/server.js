@@ -13,6 +13,7 @@ const jobRoutes = require("./routes/jobs");
 const subscriptionRoutes = require("./routes/subscription");
 const billingRoutes = require("./routes/billing");
 const pesapalRoutes = require("./routes/pesapal"); // Import pesapal routes
+const adminRoutes = require("./routes/admin"); // Import admin routes
 
 const app = express();
 const server = require("http").createServer(app);
@@ -108,6 +109,7 @@ app.use("/api/billing-address", billingRoutes);
 app.use("/api/pesapal", pesapalRoutes); // Use pesapal routes
 const categoryRoutes = require("./routes/categories");
 app.use("/api/categories", categoryRoutes);
+app.use("/api/admin", adminRoutes); // Use admin routes
 
 // 404 handler
 app.use("*", (req, res) => {

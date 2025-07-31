@@ -10,7 +10,7 @@ router.post('/ipn', subscriptionController.handleIpn);
 router.get('/callback', subscriptionController.handleCallback);
 
 // Get subscription status
-rourouter.get('/status', authenticateToken, subscriptionController.getSubscriptionStatus);
+router.get('/status', authenticateToken, subscriptionController.getSubscriptionStatus);
 
 // Refresh subscription status
 router.post('/refresh', authenticateToken, subscriptionController.refreshSubscriptionStatus);
