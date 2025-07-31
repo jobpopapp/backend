@@ -125,7 +125,8 @@ exports.submitOrder = async (req, res) => {
   const plan = {
     amount: planData.price,
     description: planData.description,
-    currency: planData.currency,
+    // Always use 'USH' for Pesapal
+    currency: "UGX",
   };
 
   // 3. Get Pesapal Token
@@ -143,11 +144,13 @@ exports.submitOrder = async (req, res) => {
   // 4. Construct Order Payload
   const orderPayload = {
     id: `JOBPOP-${companyId}-${Date.now()}`,
-    currency: plan.currency,
-    amount: plan.amount,
+    currency: plan.currency, // 'USH'
+    amount: parseFloat(plan.amount).toFixed(2),
     description: plan.description,
     callback_url: process.env.PESAPAL_CALLBACK_URL,
+    redirect_mode: "", // Add as per Pesapal docs
     notification_id: process.env.PESAPAL_IPN_ID, // Get this from your Pesapal dashboard
+    branch: "", // Add as per Pesapal docs, or set to your store/branch name
     billing_address: {
       email_address: billingAddress.email_address,
       phone_number: billingAddress.phone_number,
@@ -171,7 +174,7 @@ exports.submitOrder = async (req, res) => {
       orderPayload
     );
     const response = await axios.post(
-      `${PESAPAL_API}/SubmitOrderRequest`,
+      `${PESAPAL_API}/Transactions/SubmitOrderRequest`,
       orderPayload,
       {
         headers: {
@@ -180,10 +183,13 @@ exports.submitOrder = async (req, res) => {
         },
       }
     );
-    console.log(
-      "[Pesapal] Order submission successful. Full Pesapal Response:",
-      JSON.stringify(response.data, null, 2)
-    );
+    // Log the full Axios response for debugging
+    console.log("[Pesapal] Axios full response:", {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data,
+    });
 
     // 6. Save transaction details for reconciliation
     await supabase.from("subscriptions").insert([
@@ -195,7 +201,7 @@ exports.submitOrder = async (req, res) => {
       },
     ]);
 
-    res.json({ redirect_url: response.data.redirect_url });
+    res.json(response.data);
   } catch (error) {
     console.error(
       "[Pesapal] Order Submission Error:",

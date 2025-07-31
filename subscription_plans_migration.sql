@@ -25,7 +25,7 @@ VALUES
     'Per Job Plan',
     'Pay only for the jobs you post',
     500,
-    'UGX',
+    'USH',
     NULL, -- No duration for a single job post
     '["Single job posting", "Job management dashboard", "Email support", "No expiry date"]'::jsonb,
     FALSE
@@ -35,7 +35,7 @@ VALUES
     'Monthly Plan',
     'Post unlimited jobs for 30 days',
     700,
-    'UGX',
+    'USH',
     30,
     '["Unlimited job postings", "Job management dashboard", "Email support", "30 days validity"]'::jsonb,
     TRUE
@@ -45,7 +45,7 @@ VALUES
     'Annual Plan',
     'Post unlimited jobs for 365 days with significant savings',
     1000,
-    'UGX',
+    'USH',
     365,
     '["Unlimited job postings", "Job management dashboard", "Priority email support", "365 days validity", "Save vs monthly"]'::jsonb,
     FALSE
