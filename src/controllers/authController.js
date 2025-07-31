@@ -109,6 +109,12 @@ const login = async (req, res) => {
     // Remove password hash from response
     const { password_hash, ...companyData } = company;
 
+    // Check and update subscription status (non-blocking)
+    const {
+      checkAndUpdateSubscription,
+    } = require("../utils/pesapalSubscriptionCheck");
+    checkAndUpdateSubscription(company.id);
+
     res.json(
       formatResponse(
         true,

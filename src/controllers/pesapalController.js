@@ -197,7 +197,7 @@ exports.submitOrder = async (req, res) => {
     }
     // For per_job, endDate remains null
 
-    console.log("[Pesapal] Inserting subscription record:", {
+    const upsertPayload = {
       company_id: companyId,
       plan_type: planType,
       pesapal_txn_id: response.data.order_tracking_id,
@@ -205,23 +205,11 @@ exports.submitOrder = async (req, res) => {
       end_date: endDate ? endDate.toISOString() : null,
       transactionstatus: "pending",
       redirect_url: response.data.redirect_url || null,
-    });
+    };
+    console.log("[Pesapal] Upsert payload for subscriptions:", upsertPayload);
     const { data: upsertData, error: upsertError } = await supabase
       .from("subscriptions")
-      .upsert(
-        [
-          {
-            company_id: companyId,
-            plan_type: planType,
-            pesapal_txn_id: response.data.order_tracking_id, // Use order_tracking_id
-            start_date: now.toISOString(),
-            end_date: endDate ? endDate.toISOString() : null,
-            transactionstatus: "pending",
-            redirect_url: response.data.redirect_url || null,
-          },
-        ],
-        { onConflict: ["company_id"] }
-      );
+      .upsert([upsertPayload], { onConflict: ["company_id"] });
     if (upsertError) {
       console.error(
         "[Pesapal] Error upserting subscription record:",

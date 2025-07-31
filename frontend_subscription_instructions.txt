@@ -1,0 +1,50 @@
+JobPop Frontend: Post-Login Subscription Status Instructions
+
+1. After Successful Login
+- Immediately call the backend API to check the user's subscription status:
+  Endpoint: GET /api/subscription/status
+  (This maps to the getSubscriptionStatus controller.)
+  Headers: Include the user's JWT token for authentication.
+
+
+2. How to Use the Response
+- The response will look like:
+  {
+    "company_id": "...",
+    "is_active": true,
+    "plan_type": "monthly",
+    "pesapal_txn_id": "xxxx-xxxx-xxxx",
+    "start_date": "2025-07-31T12:00:00.000Z",
+    "end_date": "2025-08-31T12:00:00.000Z",
+    "transactionstatus": "complete",
+    "redirect_url": "..."
+  }
+  or, if no subscription:
+  {
+    "company_id": "...",
+    "is_active": false
+  }
+- For debugging, print the full response and company_id to the browser console:
+  ```js
+  console.log('Subscription status response:', response);
+  console.log('Company ID:', response.company_id);
+  ```
+- What to do:
+  - If is_active is true, grant access to premium features.
+  - If is_active is false, show a message like "No active subscription. Please subscribe."
+  - Optionally, display plan details (plan_type, start_date, end_date, transactionstatus) in the user's dashboard.
+
+3. Payment Status Handling
+- The backend will automatically check and update the subscription status on login (using Pesapal's API if needed).
+- The frontend does NOT need to call any payment or transaction status API directly.
+- The only API the frontend needs to call is /api/subscription/status after login.
+
+4. Error Handling
+- If the /api/subscription/status call fails or returns is_active: false, display a clear message and guide the user to subscribe or retry payment.
+
+5. Summary
+- After login, always call /api/subscription/status to get the user's current subscription/payment status.
+- Use the is_active field to control access to premium features.
+- No need for the frontend to check or update payment status directly—this is handled by the backend.
+
+If you need to display more details (like transaction status or error messages), ask the backend team to include those fields in the /api/subscription/status response.

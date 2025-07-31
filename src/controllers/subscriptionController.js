@@ -65,10 +65,14 @@ exports.handleCallback = async (req, res) => {
       .eq("pesapal_tracking_id", OrderTrackingId);
 
     // Redirect to a new frontend route with payment status
-    res.redirect(`${process.env.FRONTEND_URL}/subscription/payment-result?orderTrackingId=${OrderTrackingId}&status=${payment_status_description}`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/subscription/payment-result?orderTrackingId=${OrderTrackingId}&status=${payment_status_description}`
+    );
   } catch (error) {
     console.error("Error handling callback:", error);
-    res.redirect(`${process.env.FRONTEND_URL}/subscription/payment-result?status=error`);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/subscription/payment-result?status=error`
+    );
   }
 };
 
@@ -129,10 +133,10 @@ exports.getSubscriptionStatus = async (req, res) => {
   const companyId = req.companyId;
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("is_active, plan_type, pesapal_txn_id, start_date, end_date")
+    .select(
+      "id, company_id, is_active, plan_type, pesapal_txn_id, start_date, end_date, transactionstatus, redirect_url"
+    )
     .eq("company_id", companyId)
-    .order("created_at", { ascending: false })
-    .limit(1)
     .single();
 
   // Always log the raw data and error for debugging
@@ -150,11 +154,11 @@ exports.getSubscriptionStatus = async (req, res) => {
   }
 
   if (error || !data) {
-    // No subscription found, return is_active: false
+    // No subscription found, return is_active: false and company_id
     console.log(
       `[Subscription] Status for company_id ${companyId}: is_active = false`
     );
-    return res.json({ is_active: false });
+    return res.json({ company_id: companyId, is_active: false });
   }
 
   // Print the subscription status for the logged-in company
@@ -163,9 +167,10 @@ exports.getSubscriptionStatus = async (req, res) => {
     is_active: !!data.is_active,
   });
 
-  // Return the subscription status, always include is_active
+  // Return the subscription status, always include company_id and is_active
   res.json({
     ...data,
+    company_id: companyId,
     is_active: !!data.is_active,
   });
 };
