@@ -199,7 +199,7 @@ exports.submitOrder = async (req, res) => {
     } else if (planType === "annual") {
       endDate = new Date(now);
       endDate.setDate(now.getDate() + 365);
-    } else if (planType === "per_job") {
+    } else if (planType === "daily") {
       endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
     }
 
