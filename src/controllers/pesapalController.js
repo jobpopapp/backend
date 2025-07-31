@@ -183,8 +183,6 @@ exports.submitOrder = async (req, res) => {
         },
       }
     );
-    // Optionally log only the relevant Pesapal response data
-    console.log("[Pesapal] Pesapal response data:", response.data);
 
     // 6. Save transaction details for reconciliation
     await supabase.from("subscriptions").insert([
