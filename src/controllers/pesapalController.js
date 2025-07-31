@@ -183,13 +183,8 @@ exports.submitOrder = async (req, res) => {
         },
       }
     );
-    // Log the full Axios response for debugging
-    console.log("[Pesapal] Axios full response:", {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      data: response.data,
-    });
+    // Optionally log only the relevant Pesapal response data
+    console.log("[Pesapal] Pesapal response data:", response.data);
 
     // 6. Save transaction details for reconciliation
     await supabase.from("subscriptions").insert([
@@ -201,7 +196,14 @@ exports.submitOrder = async (req, res) => {
       },
     ]);
 
-    res.json(response.data);
+    // Return only the required fields to the frontend in the specified format
+    res.json({
+      order_tracking_id: response.data.order_tracking_id || null,
+      merchant_reference: response.data.merchant_reference || null,
+      redirect_url: response.data.redirect_url || null,
+      error: response.data.error || null,
+      status: response.data.status ? String(response.data.status) : null,
+    });
   } catch (error) {
     console.error(
       "[Pesapal] Order Submission Error:",
