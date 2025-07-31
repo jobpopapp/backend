@@ -174,3 +174,83 @@ exports.getSubscriptionStatus = async (req, res) => {
     is_active: !!data.is_active,
   });
 };
+
+exports.refreshSubscriptionStatus = async (req, res) => {
+  const { company_id } = req.body;
+
+  if (!company_id) {
+    return res.status(400).json({ error: "Company ID is required" });
+  }
+
+  try {
+    // 1. Fetch the subscription details from the subscriptions table
+    const { data: subscription, error: subError } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("company_id", company_id)
+      .single();
+
+    if (subError || !subscription) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+
+    const { pesapal_txn_id, plan_type } = subscription;
+
+    if (!pesapal_txn_id) {
+      return res.status(400).json({ error: "No transaction ID found for this subscription" });
+    }
+
+    // 2. Authenticate and get the JWT token
+    const token = await getAuthToken();
+
+    // 3. Get the transaction status using the pesapal_txn_id
+    const transactionStatus = await getTransactionStatus(pesapal_txn_id);
+
+    // 4. If the status code depicts completed, then update the columns
+    if (transactionStatus.status_code === 1) {
+      const now = new Date();
+      let endDate = new Date(now);
+
+      switch (plan_type) {
+        case "daily":
+          endDate.setDate(now.getDate() + 1);
+          break;
+        case "monthly":
+          endDate.setMonth(now.getMonth() + 1);
+          break;
+        case "annual":
+          endDate.setFullYear(now.getFullYear() + 1);
+          break;
+        default:
+          // Do nothing
+          break;
+      }
+
+      const { data: updatedSubscription, error: updateError } = await supabase
+        .from("subscriptions")
+        .update({
+          is_active: true,
+          start_date: now.toISOString(),
+          end_date: endDate.toISOString(),
+          transactionstatus: "COMPLETED",
+          redirect_url: "",
+        })
+        .eq("company_id", company_id)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // 5. Pass the new subscriptions data to the frontend
+      return res.json(updatedSubscription);
+    } else {
+      // If status is not completed, just return the current subscription data
+      return res.json(subscription);
+    }
+  } catch (error) {
+    console.error("Error refreshing subscription status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
