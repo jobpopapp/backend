@@ -64,15 +64,11 @@ exports.handleCallback = async (req, res) => {
       .update({ status: payment_status_description })
       .eq("pesapal_tracking_id", OrderTrackingId);
 
-    // Redirect to a success or failure page on the frontend
-    if (payment_status_description === "Completed") {
-      res.redirect(`${process.env.FRONTEND_URL}/payment-success`);
-    } else {
-      res.redirect(`${process.env.FRONTEND_URL}/payment-failure`);
-    }
+    // Redirect to a new frontend route with payment status
+    res.redirect(`${process.env.FRONTEND_URL}/subscription/payment-result?orderTrackingId=${OrderTrackingId}&status=${payment_status_description}`);
   } catch (error) {
     console.error("Error handling callback:", error);
-    res.redirect(`${process.env.FRONTEND_URL}/payment-error`);
+    res.redirect(`${process.env.FRONTEND_URL}/subscription/payment-result?status=error`);
   }
 };
 

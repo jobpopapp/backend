@@ -10,10 +10,14 @@ const getAuthToken = async () => {
       consumer_key: process.env.PESAPAL_CONSUMER_KEY,
       consumer_secret: process.env.PESAPAL_CONSUMER_SECRET,
     });
+    console.log(
+      "[Pesapal Auth] Token received successfully. Pesapal Response Data:",
+      JSON.stringify(res.data, null, 2)
+    );
     return res.data.token;
   } catch (error) {
     console.error(
-      "Pesapal Auth Error:",
+      "[Pesapal Auth] Error:",
       error.response ? error.response.data : error.message
     );
     throw new Error("Could not authenticate with Pesapal");
@@ -67,6 +71,7 @@ exports.registerIpnUrl = async (req, res) => {
 
 // Submit Order to Pesapal
 exports.submitOrder = async (req, res) => {
+  console.log("[Pesapal] Incoming submitOrder request body:", req.body);
   const { planType } = req.body;
   const companyId = req.companyId;
 
@@ -127,6 +132,10 @@ exports.submitOrder = async (req, res) => {
   let token;
   try {
     token = await getAuthToken();
+    console.log(
+      "[Pesapal] Backend authenticated with Pesapal. JWT Token:",
+      token
+    );
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -137,7 +146,7 @@ exports.submitOrder = async (req, res) => {
     currency: plan.currency,
     amount: plan.amount,
     description: plan.description,
-    callback_url: `${process.env.API_BASE_URL}/api/subscription/callback`,
+    callback_url: process.env.PESAPAL_CALLBACK_URL,
     notification_id: process.env.PESAPAL_IPN_ID, // Get this from your Pesapal dashboard
     billing_address: {
       email_address: billingAddress.email_address,
@@ -157,6 +166,10 @@ exports.submitOrder = async (req, res) => {
 
   // 5. Submit Order
   try {
+    console.log(
+      "[Pesapal] Submitting order to Pesapal with payload:",
+      orderPayload
+    );
     const response = await axios.post(
       `${PESAPAL_API}/SubmitOrderRequest`,
       orderPayload,
@@ -167,13 +180,17 @@ exports.submitOrder = async (req, res) => {
         },
       }
     );
+    console.log(
+      "[Pesapal] Order submission successful. Full Pesapal Response:",
+      JSON.stringify(response.data, null, 2)
+    );
 
     // 6. Save transaction details for reconciliation
     await supabase.from("subscriptions").insert([
       {
         company_id: companyId,
         plan_type: planType,
-        pesapal_tracking_id: response.data.tracking_id,
+        pesapal_tracking_id: response.data.order_tracking_id, // Use order_tracking_id
         status: "PENDING",
       },
     ]);
@@ -181,7 +198,7 @@ exports.submitOrder = async (req, res) => {
     res.json({ redirect_url: response.data.redirect_url });
   } catch (error) {
     console.error(
-      "Pesapal Order Submission Error:",
+      "[Pesapal] Order Submission Error:",
       error.response ? error.response.data : error.message
     );
     res.status(500).json({ error: "Failed to submit order to Pesapal." });
