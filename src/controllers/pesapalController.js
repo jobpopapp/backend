@@ -74,6 +74,7 @@ exports.submitOrder = async (req, res) => {
   console.log("[Pesapal] Incoming submitOrder request body:", req.body);
   const { planType } = req.body;
   const companyId = req.companyId;
+  console.log(`[Pesapal][DEBUG] Incoming planType from frontend:`, planType);
 
   // 1. Get Billing Address
   console.log(
@@ -116,6 +117,10 @@ exports.submitOrder = async (req, res) => {
     .select("*")
     .eq("id", planType)
     .single();
+  console.log(`[Pesapal][DEBUG] Result of plan lookup for id='${planType}':`, {
+    planData,
+    planError,
+  });
 
   if (planError || !planData) {
     console.error("Error fetching plan:", planError);
@@ -194,8 +199,9 @@ exports.submitOrder = async (req, res) => {
     } else if (planType === "annual") {
       endDate = new Date(now);
       endDate.setDate(now.getDate() + 365);
+    } else if (planType === "per_job") {
+      endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
     }
-    // For per_job, endDate remains null
 
     const upsertPayload = {
       company_id: companyId,
@@ -209,7 +215,8 @@ exports.submitOrder = async (req, res) => {
     console.log("[Pesapal] Upsert payload for subscriptions:", upsertPayload);
     const { data: upsertData, error: upsertError } = await supabase
       .from("subscriptions")
-      .upsert([upsertPayload], { onConflict: ["company_id"] });
+      .upsert([upsertPayload], { onConflict: ["company_id"] })
+      .select();
     if (upsertError) {
       console.error(
         "[Pesapal] Error upserting subscription record:",
