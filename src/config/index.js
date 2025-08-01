@@ -32,6 +32,9 @@ module.exports = {
     origins: process.env.ALLOWED_ORIGINS?.split(",") || [
       "http://localhost:4200",
       "http://localhost:3000",
+      "https://jobpopapp.netlify.app",
+      "https://jobpop.app",
+      "https://www.jobpop.app",
     ],
   },
 
