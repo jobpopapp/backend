@@ -24,4 +24,16 @@ router.get("/companies/:id", authenticateToken, isAdmin, adminController.getComp
 router.put("/companies/:id", authenticateToken, isAdmin, adminController.updateCompanyProfile);
 router.put("/companies/:id/verify", authenticateToken, isAdmin, adminController.updateCompanyVerification);
 
+// Analytics Routes
+router.get("/analytics", authenticateToken, isAdmin, adminController.getAnalytics);
+
+// Subscription Plan Management Routes
+router.post("/subscription-plans", authenticateToken, isAdmin, adminController.createSubscriptionPlan);
+router.put("/subscription-plans/:id", authenticateToken, isAdmin, adminController.updateSubscriptionPlan);
+router.delete("/subscription-plans/:id", authenticateToken, isAdmin, adminController.deleteSubscriptionPlan);
+
+// Subscription Management Routes
+router.get("/subscriptions", authenticateToken, isAdmin, adminController.getSubscriptions);
+router.put("/subscriptions/:id", authenticateToken, isAdmin, adminController.updateSubscription);
+
 module.exports = router;
