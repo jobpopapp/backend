@@ -146,6 +146,148 @@ const uploadCertificate = async (req, res) => {
   }
 };
 
+const uploadLicense = async (req, res) => {
+  try {
+    const companyId = req.companyId;
+
+    if (!req.file) {
+      return res
+        .status(400)
+        .json(
+          formatResponse(
+            false,
+            null,
+            "No file uploaded. Please select a license file."
+          )
+        );
+    }
+
+    const file = req.file;
+
+    // Additional validation
+    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      // Clean up local file
+      await fs.unlink(file.path).catch(console.error);
+      return res
+        .status(400)
+        .json(
+          formatResponse(
+            false,
+            null,
+            "Invalid file type. Please upload PDF, JPG, JPEG, or PNG files only."
+          )
+        );
+    }
+
+    // Generate unique filename with original name
+    const timestamp = Date.now();
+    const sanitizedOriginalName = file.originalname.replace(
+      /[^a-zA-Z0-9.-]/g,
+      "_"
+    );
+    const fileName = `licenses/${companyId}/${timestamp}_${sanitizedOriginalName}`;
+
+    // Read the file
+    const fileBuffer = await fs.readFile(file.path);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("company-documents")
+      .upload(fileName, fileBuffer, {
+        contentType: file.mimetype,
+        upsert: true,
+        cacheControl: "3600", // Cache for 1 hour
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      // Clean up local file
+      await fs.unlink(file.path).catch(console.error);
+      return res
+        .status(500)
+        .json(
+          formatResponse(
+            false,
+            null,
+            "Failed to upload license to storage. Please try again."
+          )
+        );
+    }
+
+    // Get public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from("company-documents")
+      .getPublicUrl(fileName);
+
+    // Update company record with license URL and additional metadata
+    const { data: company, error: updateError } = await supabase
+      .from("companies")
+      .update({
+        license_url: urlData.publicUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", companyId)
+      .select(
+        "id, name, email, phone, country, is_verified, certificate_url, license_url, created_at, updated_at"
+      )
+      .single();
+
+    if (updateError) {
+      console.error("Update company error:", updateError);
+      // Clean up local file
+      await fs.unlink(file.path).catch(console.error);
+      return res
+        .status(500)
+        .json(
+          formatResponse(
+            false,
+            null,
+            "Failed to update company record. Please try again."
+          )
+        );
+    }
+
+    // Clean up local file
+    await fs.unlink(file.path).catch(console.error);
+
+    res.json(
+      formatResponse(
+        true,
+        {
+          company,
+          license: {
+            url: urlData.publicUrl,
+            originalName: file.originalname,
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+          },
+        },
+        "License uploaded successfully!"
+      )
+    );
+  } catch (error) {
+    console.error("Upload license error:", error);
+
+    // Clean up local file if it exists
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(console.error);
+    }
+
+    res
+      .status(500)
+      .json(
+        formatResponse(
+          false,
+          null,
+          "Internal server error during license upload."
+        )
+      );
+  }
+};
+
 // Get company information
 const getCompanyInfo = async (req, res) => {
   try {
@@ -369,6 +511,7 @@ const removeCertificate = async (req, res) => {
 
 module.exports = {
   uploadCertificate,
+  uploadLicense,
   getCertificateInfo,
   removeCertificate,
   getCompanyInfo,

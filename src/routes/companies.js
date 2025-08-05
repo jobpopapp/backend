@@ -13,6 +13,14 @@ router.post(
   companyController.uploadCertificate
 );
 
+router.post(
+  "/license",
+  authenticateToken,
+  upload.single("license"),
+  handleUploadError,
+  companyController.uploadLicense
+);
+
 router.get(
   "/certificate",
   authenticateToken,
