@@ -23,6 +23,7 @@ router.get("/companies", authenticateToken, isAdmin, adminController.getCompanie
 router.get("/companies/:id", authenticateToken, isAdmin, adminController.getCompanyById);
 router.put("/companies/:id", authenticateToken, isAdmin, adminController.updateCompanyProfile);
 router.put("/companies/:id/verify", authenticateToken, isAdmin, adminController.updateCompanyVerification);
+router.delete("/companies/:id", authenticateToken, isAdmin, adminController.deleteCompany);
 
 // Analytics Routes
 router.get("/analytics", authenticateToken, isAdmin, adminController.getAnalytics);

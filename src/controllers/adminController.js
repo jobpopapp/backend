@@ -169,3 +169,15 @@ exports.updateSubscription = async (req, res) => {
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
+
+exports.deleteCompany = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase.from("companies").delete().eq("id", id);
+    if (error) throw error;
+    res.json({ success: true, message: "Company deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting company:", error.message);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
