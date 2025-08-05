@@ -14,6 +14,7 @@ const subscriptionRoutes = require("./routes/subscription");
 const billingRoutes = require("./routes/billing");
 const pesapalRoutes = require("./routes/pesapal"); // Import pesapal routes
 const adminRoutes = require("./routes/admin"); // Import admin routes
+const smsRoutes = require("./routes/sms");
 
 const app = express();
 const server = require("http").createServer(app);
@@ -110,6 +111,7 @@ app.use("/api/pesapal", pesapalRoutes); // Use pesapal routes
 const categoryRoutes = require("./routes/categories");
 app.use("/api/categories", categoryRoutes);
 app.use("/api/admin", adminRoutes); // Use admin routes
+app.use("/api/sms", smsRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
