@@ -1,3 +1,4 @@
+
 const { sendSMS } = require('../utils/sms');
 
 async function sendSmsController(req, res) {
@@ -34,9 +35,31 @@ async function sendNewCompanyNotificationController(req, res) {
     const result = await sendSMS(phoneNumber, message);
     res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error('Error sending notification SMS:', error.message);
     res.status(500).json({ success: false, error: 'Failed to send notification SMS' });
   }
 }
 
-module.exports = { sendSmsController, sendNewCompanyNotificationController };
+async function sendDocumentUploadNotificationController(req, res) {
+  const { companyName, documentName } = req.body;
+  const phoneNumber = process.env.JOBPOPNUMBER;
+
+  if (!companyName || !documentName) {
+    return res.status(400).json({ error: 'Company name and document name are required' });
+  }
+
+  if (!phoneNumber) {
+    console.error('JOBPOPNUMBER not set in .env file');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  const message = `Dear admin Jobpop app, ${companyName} has uploaded a new document: ${documentName} for approval.`;
+
+  try {
+    const result = await sendSMS(phoneNumber, message);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to send document upload notification SMS' });
+  }
+}
+
+module.exports = { sendSmsController, sendNewCompanyNotificationController, sendDocumentUploadNotificationController };
