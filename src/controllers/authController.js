@@ -1,5 +1,5 @@
 const { supabase } = require("../config/supabase");
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 const {
   hashPassword,
   comparePassword,
@@ -208,20 +208,40 @@ const googleLogin = async (req, res) => {
     const email = payload?.email;
 
     if (!email) {
-      return res.status(400).json(formatResponse(false, null, "Google ID token missing email."));
+      return res
+        .status(400)
+        .json(formatResponse(false, null, "Google ID token missing email."));
     }
 
     // Check if a company with this email already exists
     const { data: company, error } = await supabase
       .from("companies")
-      .select("id, name, email, phone, country, is_verified, certificate_url, created_at")
+      .select(
+        "id, name, email, phone, country, is_verified, certificate_url, created_at"
+      )
       .eq("email", email)
       .single();
 
     if (error || !company) {
       // Company not found, or an error occurred during lookup
       console.error("Google login error: Company not found or DB error", error);
-      return res.status(404).json(formatResponse(false, null, "No existing company account found with this Google email. Please register or use your existing login."));
+      console.log(
+        "Backend sending error response:",
+        formatResponse(
+          false,
+          null,
+          "No existing company account found with this Google email. Please register or use your existing login."
+        )
+      );
+      return res
+        .status(404)
+        .json(
+          formatResponse(
+            false,
+            null,
+            "No existing company account found with this Google email. Please register or use your existing login."
+          )
+        );
     }
 
     // If company exists, generate JWT and return success
@@ -229,14 +249,29 @@ const googleLogin = async (req, res) => {
     const { password_hash, ...companyData } = company; // Remove password hash
 
     // Check and update subscription status (non-blocking)
-    const { checkAndUpdateSubscription } = require("../utils/pesapalSubscriptionCheck");
+    const {
+      checkAndUpdateSubscription,
+    } = require("../utils/pesapalSubscriptionCheck");
     checkAndUpdateSubscription(company.id);
 
-    res.json(formatResponse(true, { company: companyData, token }, "Google login successful."));
-
+    res.json(
+      formatResponse(
+        true,
+        { company: companyData, token },
+        "Google login successful."
+      )
+    );
   } catch (error) {
     console.error("Google login verification error:", error);
-    res.status(500).json(formatResponse(false, null, "Failed to verify Google ID token or internal server error."));
+    res
+      .status(500)
+      .json(
+        formatResponse(
+          false,
+          null,
+          "Failed to verify Google ID token or internal server error."
+        )
+      );
   }
 };
 
