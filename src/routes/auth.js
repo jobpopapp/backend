@@ -10,6 +10,7 @@ const { authenticateToken } = require("../middleware/auth");
 // Public routes
 router.post("/register", validateCompanyRegistration, authController.register);
 router.post("/login", validateCompanyLogin, authController.login);
+router.post("/google-login", authController.googleLogin);
 
 // Protected routes
 router.get("/profile", authenticateToken, authController.getProfile);
