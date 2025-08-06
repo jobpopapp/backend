@@ -1,4 +1,9 @@
 const { supabase } = require("../config/supabase");
+const { sendSMS } = require("../utils/sms");
+require('dotenv').config();
+
+// Temporary store for 2FA codes (In a real app, use a database with expiry)
+const twoFACodes = {};
 
 exports.getCompanies = async (req, res) => {
   try {
@@ -170,11 +175,52 @@ exports.updateSubscription = async (req, res) => {
   }
 };
 
+exports.initiateCompanyDelete2FA = async (req, res) => {
+  const { companyId } = req.body;
+  const directorNumber = process.env.DIRECTORNUMBER;
+
+  if (!directorNumber) {
+    console.error("DIRECTORNUMBER not set in .env file");
+    return res.status(500).json({ success: false, message: "Server configuration error: Director number not set." });
+  }
+
+  // Generate a random 4-digit code
+  const code = Math.floor(1000 + Math.random() * 9000).toString();
+  const expiryTime = Date.now() + 5 * 60 * 1000; // Code valid for 5 minutes
+
+  // Store the code temporarily
+  twoFACodes[companyId] = { code, expiryTime };
+  console.log(`Generated 2FA code for company ${companyId}: ${code}`);
+
+  const message = `Jobpop Admin: Your 2FA code for company deletion is ${code}. This code is valid for 5 minutes.`;
+
+  try {
+    await sendSMS(directorNumber, message);
+    res.json({ success: true, message: "2FA code sent to director's number." });
+  } catch (error) {
+    console.error("Error sending 2FA SMS:", error.message);
+    delete twoFACodes[companyId]; // Clean up if SMS fails
+    res.status(500).json({ success: false, message: "Failed to send 2FA code. Please try again." });
+  }
+};
+
 exports.deleteCompany = async (req, res) => {
   const { id } = req.params;
+  const { code } = req.body; // Expecting the 2FA code in the request body
+
+  // Retrieve stored code
+  const storedCodeData = twoFACodes[id];
+
+  if (!storedCodeData || storedCodeData.code !== code || Date.now() > storedCodeData.expiryTime) {
+    delete twoFACodes[id]; // Invalidate code after failed attempt or expiry
+    return res.status(401).json({ success: false, message: "Invalid or expired 2FA code." });
+  }
+
+  // If code is valid, proceed with deletion
   try {
     const { error } = await supabase.from("companies").delete().eq("id", id);
     if (error) throw error;
+    delete twoFACodes[id]; // Clean up after successful deletion
     res.json({ success: true, message: "Company deleted successfully" });
   } catch (error) {
     console.error("Error deleting company:", error.message);

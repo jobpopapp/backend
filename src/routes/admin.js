@@ -24,6 +24,7 @@ router.get("/companies/:id", authenticateToken, isAdmin, adminController.getComp
 router.put("/companies/:id", authenticateToken, isAdmin, adminController.updateCompanyProfile);
 router.put("/companies/:id/verify", authenticateToken, isAdmin, adminController.updateCompanyVerification);
 router.delete("/companies/:id", authenticateToken, isAdmin, adminController.deleteCompany);
+router.post("/companies/initiate-delete-2fa", authenticateToken, isAdmin, adminController.initiateCompanyDelete2FA);
 
 // Analytics Routes
 router.get("/analytics", authenticateToken, isAdmin, adminController.getAnalytics);
