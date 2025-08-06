@@ -241,3 +241,17 @@ exports.deleteCompany = async (req, res) => {
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
+
+exports.getSubscriptionPlanAnalytics = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_subscription_counts_by_plan');
+
+    if (error) throw error;
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching subscription plan analytics:", error.message);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};

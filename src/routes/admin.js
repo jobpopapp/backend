@@ -28,6 +28,7 @@ router.post("/companies/initiate-delete-2fa", authenticateToken, isAdmin, adminC
 
 // Analytics Routes
 router.get("/analytics", authenticateToken, isAdmin, adminController.getAnalytics);
+router.get("/analytics/subscription-plans", authenticateToken, isAdmin, adminController.getSubscriptionPlanAnalytics);
 
 // Subscription Plan Management Routes
 router.post("/subscription-plans", authenticateToken, isAdmin, adminController.createSubscriptionPlan);

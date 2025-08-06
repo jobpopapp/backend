@@ -20,7 +20,7 @@
   "license": "ISC",
   "description": "JobPop Hiring Company Backend API - Express.js server for company registration, job management, and subscription handling",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.3",
+    "@supabase/supabase-js": "^2.53.0",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
