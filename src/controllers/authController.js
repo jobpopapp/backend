@@ -216,62 +216,29 @@ const googleLogin = async (req, res) => {
     // Check if a company with this email already exists
     const { data: company, error } = await supabase
       .from("companies")
-      .select(
-        "id, name, email, phone, country, is_verified, certificate_url, created_at"
-      )
+      .select("id, name, email, phone, country, is_verified, certificate_url, created_at")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
-    if (error || !company) {
+    if (error || company === null) {
       // Company not found, or an error occurred during lookup
       console.error("Google login error: Company not found or DB error", error);
-      console.log(
-        "Backend sending error response:",
-        formatResponse(
-          false,
-          null,
-          "No existing company account found with this Google email. Please register or use your existing login."
-        )
-      );
-      return res
-        .status(404)
-        .json(
-          formatResponse(
-            false,
-            null,
-            "No existing company account found with this Google email. Please register or use your existing login."
-          )
-        );
+      return res.status(404).json(formatResponse(false, null, "No existing company account found with this Google email. Please register or use your existing login."));
     }
 
     // If company exists, generate JWT and return success
     const token = generateToken(company.id);
-    const { password_hash, ...companyData } = company; // Remove password hash
+    const { password_hash, ...companyData } = company;
 
     // Check and update subscription status (non-blocking)
-    const {
-      checkAndUpdateSubscription,
-    } = require("../utils/pesapalSubscriptionCheck");
+    const { checkAndUpdateSubscription } = require("../utils/pesapalSubscriptionCheck");
     checkAndUpdateSubscription(company.id);
 
-    res.json(
-      formatResponse(
-        true,
-        { company: companyData, token },
-        "Google login successful."
-      )
-    );
+    res.json(formatResponse(true, { company: companyData, token }, "Google login successful."));
+
   } catch (error) {
     console.error("Google login verification error:", error);
-    res
-      .status(500)
-      .json(
-        formatResponse(
-          false,
-          null,
-          "Failed to verify Google ID token or internal server error."
-        )
-      );
+    res.status(500).json(formatResponse(false, null, "Failed to verify Google ID token or internal server error."));
   }
 };
 
