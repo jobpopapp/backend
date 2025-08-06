@@ -184,6 +184,20 @@ exports.initiateCompanyDelete2FA = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server configuration error: Director number not set." });
   }
 
+  // Fetch company name
+  const { data: company, error: companyError } = await supabase
+    .from("companies")
+    .select("name")
+    .eq("id", companyId)
+    .single();
+
+  if (companyError || !company) {
+    console.error("Error fetching company for 2FA:", companyError ? companyError.message : "Company not found");
+    return res.status(404).json({ success: false, message: "Company not found or error fetching company details." });
+  }
+
+  const companyName = company.name;
+
   // Generate a random 4-digit code
   const code = Math.floor(1000 + Math.random() * 9000).toString();
   const expiryTime = Date.now() + 5 * 60 * 1000; // Code valid for 5 minutes
@@ -192,7 +206,7 @@ exports.initiateCompanyDelete2FA = async (req, res) => {
   twoFACodes[companyId] = { code, expiryTime };
   console.log(`Generated 2FA code for company ${companyId}: ${code}`);
 
-  const message = `Jobpop Admin: Your 2FA code for company deletion is ${code}. This code is valid for 5 minutes.`;
+  const message = `Jobpop Admin: Your 2FA code for deleting company '${companyName}' is ${code}. This code is valid for 5 minutes.`;
 
   try {
     await sendSMS(directorNumber, message);
