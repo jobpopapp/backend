@@ -11,6 +11,8 @@ const { authenticateToken } = require("../middleware/auth");
 router.post("/register", validateCompanyRegistration, authController.register);
 router.post("/login", validateCompanyLogin, authController.login);
 router.post("/google-login", authController.googleLogin);
+router.post("/send-otp-password-reset", authController.sendOtpForPasswordReset);
+router.post("/reset-password-with-otp", authController.resetPasswordWithOtp);
 
 // Protected routes
 router.get("/profile", authenticateToken, authController.getProfile);

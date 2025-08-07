@@ -10,6 +10,11 @@ const {
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+const twoFACodes = {}; // Existing 2FA for company deletion
+
+// Temporary store for OTPs (In a real app, use a database with expiry and proper cleanup)
+const otpStore = {};
+
 // Register a new company
 const register = async (req, res) => {
   try {
@@ -248,4 +253,6 @@ module.exports = {
   getProfile,
   updateProfile,
   googleLogin,
+  sendOtpForPasswordReset,
+  resetPasswordWithOtp,
 };
