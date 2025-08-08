@@ -247,6 +247,82 @@ const googleLogin = async (req, res) => {
   }
 };
 
+const sendOtpForPasswordReset = async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ success: false, message: "Phone number is required." });
+  }
+
+  // Check if user with this phone exists
+  const { data: user, error: userError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('phone', phone)
+    .maybeSingle();
+
+  console.log(`Supabase user lookup for phone ${phone}:`, user, "Error:", userError);
+
+  if (userError || !user) {
+    console.error("User lookup failed or user not found:", userError || "User not found");
+    return res.status(404).json({ success: false, message: "No account found with this phone number." });
+  }
+
+  // Generate a 4-digit OTP
+  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+  const expiryTime = Date.now() + 5 * 60 * 1000; // OTP valid for 5 minutes
+
+  otpStore[phone] = { otp, expiryTime, userId: user.id };
+  console.log(`Generated OTP for ${phone}: ${otp}`);
+
+  const message = `Your Jobpop password reset OTP is ${otp}. It is valid for 5 minutes.`;
+
+  try {
+    console.log(`Attempting to send SMS to ${phone} with message: ${message}`);
+    await sendSMS(phone, message);
+    console.log("SMS sent successfully.");
+    res.json({ success: true, message: "OTP sent to your phone number." });
+  } catch (error) {
+    console.error("Error sending OTP SMS:", error.message);
+    delete otpStore[phone]; // Clean up if SMS fails
+    res.status(500).json({ success: false, message: "Failed to send OTP. Please try again." });
+  }
+};
+
+const resetPasswordWithOtp = async (req, res) => {
+  const { phone, otp, newPassword } = req.body;
+
+  if (!phone || !otp || !newPassword) {
+    return res.status(400).json({ success: false, message: "Phone, OTP, and new password are required." });
+  }
+
+  const storedOtpData = otpStore[phone];
+
+  if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expiryTime) {
+    delete otpStore[phone]; // Invalidate OTP after failed attempt or expiry
+    return res.status(401).json({ success: false, message: "Invalid or expired OTP." });
+  }
+
+  // Hash the new password
+  const hashedPassword = await hashPassword(newPassword);
+
+  try {
+    // Update password in Supabase for the user associated with this phone
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ password: hashedPassword })
+      .eq('phone', phone);
+
+    if (error) throw error;
+
+    delete otpStore[phone]; // Clean up after successful reset
+    res.json({ success: true, message: "Password reset successfully." });
+  } catch (error) {
+    console.error("Error resetting password:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
 module.exports = {
   register,
   login,

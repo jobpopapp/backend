@@ -141,7 +141,7 @@ app.use((error, req, res, next) => {
 // Start server
 const PORT = config.port;
 
-server.listen(PORT, () => {
+server.listen(() => {
   console.log(`🚀 JobPop Company Backend running on port ${PORT}`);
   console.log(`📝 Environment: ${config.nodeEnv}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
@@ -151,6 +151,7 @@ server.listen(PORT, () => {
     console.log("\n📋 Available Endpoints:");
     console.log("  POST /api/auth/register");
     console.log("  POST /api/auth/login");
+    console.log("  POST /api/auth/send-otp-password-reset");
     console.log("  GET  /api/auth/profile");
     console.log("  POST /api/companies/certificate");
     console.log("  GET  /api/companies/me");
